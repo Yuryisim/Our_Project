@@ -1,7 +1,9 @@
+'use strict';
 const express = require("express");
 const fs = require("node:fs/promises");
 const path = require("node:path")
 const { marked } = require("marked");
+const {mountTags} = require("./tags-plugin");
 
 const app = express();
 const PORT = 3000;
@@ -37,11 +39,11 @@ app.get("/api/docs", async (req,res) =>
     }
 });
 
-app.post("/api/docs",async (req, res) =>
+app.post("/api/docs",async (req, res) => // POST - Create - создание документа
 {
     const {name, markdown} = req.body;
 
-    if(!name || !/^[a-zA-Z0-9_-]+$/.test(name)) 
+    if(!name || !isValidName(name)) 
     {
         return res.status(400).json({error: "ERROR_incorrect_name_document"});
     }
@@ -50,7 +52,7 @@ app.post("/api/docs",async (req, res) =>
         return res.status(400).json({error: "Markdown must be a string"});
     }
 
-    getDocPath(name);
+    const filepath = getDocPath(name);
 
     try
     {
@@ -69,12 +71,12 @@ app.post("/api/docs",async (req, res) =>
     }
 })
 
-app.put("/api/docs", async (req, res) => 
+app.put("/api/docs/:name", async (req, res) => // PUT-Update- обновление документа
 {
     const {name} = req.params;
     const {markdown} = req.body;
 
-    if(!name || !/^[a-zA-Z0-9_-]+$/.test(name)) 
+    if(!name || !isValidName(name)) 
     {
         return res.status(400).json({error: "ERROR_incorrect_name_document"});
     }
@@ -101,7 +103,7 @@ app.put("/api/docs", async (req, res) =>
     }
 })
 
-app.delete("/api/docs/:name", async (req,res) =>
+app.delete("/api/docs/:name", async (req,res) => // Delete - удадление документа
 {
     const {name} = req.params;
 
@@ -110,7 +112,7 @@ app.delete("/api/docs/:name", async (req,res) =>
         return res.status(400).json({error: "Incorrect document name"});
     }
 
-    getDocPath(name);
+    const filepath = getDocPath(name);
     try
     {
         await fs.unlink(filepath);
@@ -127,15 +129,15 @@ app.delete("/api/docs/:name", async (req,res) =>
     
 })
 
-app.get("/api/docs/:name", async (req,res) =>{
+app.get("/api/docs/:name", async (req,res) =>{ // Read - стандартный просмотр
     const name = req.params.name;
 
-    if (!/^[a-zA-Z0-9_-]+$/.test(name))
+    if (!isValidName(name))
     {
         return res.status(400).json({error: "Incorrect document name"});
     }
 
-      getDocPath(name);
+    const filepath = getDocPath(name);
 
     try 
     {
@@ -165,12 +167,12 @@ app.get("/docs/:name", async (req,res) =>
 {
     const name = req.params.name;
 
-    if (!/^[a-zA-Z0-9_-]+$/.test(name))
+    if (!isValidName(name))
     {
         return res.status(400).send("ERROR_incorrect_name_document");
     }
 
-     getDocPath(name);
+     const filepath = getDocPath(name);
 
     try
     {
@@ -213,6 +215,7 @@ app.get("/docs/:name", async (req,res) =>
         res.status(500).send("Server error");
     }
 });
+mountTags(app);
 app.listen(PORT,() =>{
     console.log("Server is start");
 });
