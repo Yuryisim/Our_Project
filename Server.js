@@ -85,7 +85,7 @@ app.put("/api/docs/:name", async (req, res) => // PUT-Update- обновлени
         return res.status(400).json({error: "Markdown must be a string"});
     }
 
-    getDocPath(name);
+    const filepath = getDocPath(name);
     try 
     {
         await fs.access(filepath);
