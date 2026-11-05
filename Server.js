@@ -159,8 +159,49 @@ app.get("/api/docs/:name", async (req,res) =>{ // Read - стандартный 
     }
 })
 
-app.get("/", (req,res) => {
-    res.redirect("/docs/Index");
+app.get("/", async (req,res) => {
+    
+    try
+    {
+        const files = fs.readdir(DOCS_DIR);
+
+        const names = files
+        .filter((file) => file.endsWith(".md"))
+        .map((file) => path.basename(file,".md"))
+        .filter((name) => /^[a-zA-Z0-9_-]+$/.test(name)).sort();
+
+        const items = names
+        .map((name) => `<li><a href="/docs/${name}">${name}</a></li>`)
+        .join("");
+
+        res.type("html").send(`
+        <!doctype html>
+        <html lang = "ru">
+            <head>
+                <meta charset = "UTF-8">
+                <meta name = "viewport" content = "width=device-width, initial-scale=1">
+                <title>База знаний/MainPage</title>
+                <style>
+                    body {
+                        max-width: 800px;
+                        margin: 40px auto;
+                        padding: 0 20px;
+                        font: 16px/1.7 system-ui, sans-serif;
+                    }
+                </style>
+            </head>
+            <body>
+                <h1>Документы</h1>
+                <ul>${items || "<li>Документов пока нет</li>"}</ul>
+            </body>
+        </html>
+        `);
+    }
+    catch(error)
+    {
+        console.error(error);
+        res.status(500).send("Server error");
+    }
 })
 
 app.get("/docs/:name", async (req,res) =>
