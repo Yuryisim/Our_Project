@@ -163,7 +163,7 @@ app.get("/", async (req,res) => {
     
     try
     {
-        const files = fs.readdir(DOCS_DIR);
+        const files = await fs.readdir(DOCS_DIR);
 
         const names = files
         .filter((file) => file.endsWith(".md"))
