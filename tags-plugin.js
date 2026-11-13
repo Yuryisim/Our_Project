@@ -71,9 +71,8 @@ function mountTags(app) {
       return res.status(400).json({ error: 'Incorrect document name' });
     }
     try {
-      const note = await getNoteByTitle(name);
-      if(!note) return res.status(404).json({error: "Document not found"});
-      res.json({name, tags: note.tags});
+      const tags = await readDocTags(name);
+      res.json({ name, tags });
     } catch (error) {
       if (error.code === 'ENOENT') {
         return res.status(404).json({ error: 'Document not found' });
@@ -84,4 +83,4 @@ function mountTags(app) {
   });
 }
 
-module.exports = { mountTags,savetoBD };
+module.exports = { mountTags, savetoBD };
