@@ -3,7 +3,7 @@ const express = require("express");
 const fs = require("node:fs/promises");
 const path = require("node:path")
 const { marked } = require("marked");
-const {mountTags} = require("./tags-plugin");
+const {mountTags, savetoBD} = require("./tags-plugin"); 
 
 const app = express();
 const PORT = 3000;
@@ -57,6 +57,7 @@ app.post("/api/docs",async (req, res) => // POST - Create - создание д�
     try
     {
         await fs.writeFile(filepath,markdown,{encoding: "utf8", flag: "wx"});
+        await savetoBD(name,markdown);
 
         res.status(201).json({message: "Document created", name});
     }
@@ -90,6 +91,7 @@ app.put("/api/docs/:name", async (req, res) => // PUT-Update- обновлени
     {
         await fs.access(filepath);
         await fs.writeFile(filepath, markdown, "utf8");
+        await savetoBD(name,markdown);
 
         res.json({message: "Document Updated!!!"}, name);
     }

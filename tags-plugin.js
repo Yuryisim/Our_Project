@@ -3,6 +3,7 @@
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const { TagParser } = require('./tagParser');
+const {saveParsedNote, getNoteByTitle} = require('./database');
 
 const DOCS_DIR = path.resolve(__dirname, 'docs');
 const NAME_RE = /^[a-zA-Z0-9_-]+$/;
@@ -11,6 +12,11 @@ const parser = new TagParser({ maxLength: 50 });
 
 function blankCode(text) {
   return text.replace(/```[\s\S]*?```|`[^`\n]*`/g, (m) => m.replace(/[^\n]/g, ' '));
+}
+
+async function savetoBD(name,markdown){
+  const tags = parser.parse(blankCode(markdown), true).map((t) => t.tag);
+  return saveParsedNote(name,markdown);
 }
 
 async function readDocTags(name) {
@@ -65,8 +71,9 @@ function mountTags(app) {
       return res.status(400).json({ error: 'Incorrect document name' });
     }
     try {
-      const tags = await readDocTags(name);
-      res.json({ name, tags });
+      const note = await getNoteByTitle(name);
+      if(!note) return res.status(404).json({error: "Document not found"});
+      res.json({name, tags: note.tags});
     } catch (error) {
       if (error.code === 'ENOENT') {
         return res.status(404).json({ error: 'Document not found' });
@@ -77,4 +84,4 @@ function mountTags(app) {
   });
 }
 
-module.exports = { mountTags };
+module.exports = { mountTags,savetoBD };
