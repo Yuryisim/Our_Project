@@ -4,6 +4,7 @@ const fs = require("node:fs/promises");
 const path = require("node:path")
 const { marked } = require("marked");
 const {mountTags, savetoBD} = require("./tags-plugin"); 
+const {getNoteByTitle, getAllTitles} = require("./database")
 
 const app = express();
 const PORT = 3000;
@@ -167,10 +168,7 @@ app.get("/", async (req,res) => {
     {
         const files = await fs.readdir(DOCS_DIR);
 
-        const names = files
-        .filter((file) => file.endsWith(".md"))
-        .map((file) => path.basename(file,".md"))
-        .filter((name) => /^[a-zA-Z0-9_-]+$/.test(name)).sort();
+        const names = getAllTitles()
 
         const items = names
         .map((name) => `<li><a href="/docs/${name}">${name}</a></li>`)
@@ -219,8 +217,7 @@ app.get("/docs/:name", async (req,res) =>
 
     try
     {
-        const markdown = await fs.readFile(filepath, "utf8");
-        const html = await marked.parse(markdown);
+        const html = await marked.parse((await getNoteByTitle(name))?.content);
 
 
         res.type("html").send(`
